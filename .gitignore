@@ -1,0 +1,10 @@
+# LaTeX-Hilfsdateien und generierte PDFs
+out/
+*.aux
+*.log
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.synctex.gz
+*.DS_Store

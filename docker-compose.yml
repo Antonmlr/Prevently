@@ -17,6 +17,7 @@ services:
     build: ./api
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      API_KEY: ${API_KEY}
     ports:
       - "8000:8000"
     depends_on:

@@ -1,6 +1,4 @@
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE user (
+CREATE TABLE prevently_user (
     user_id          INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     first_name       TEXT NOT NULL,
     last_name        TEXT NOT NULL,
@@ -10,7 +8,7 @@ CREATE TABLE user (
 
 CREATE TABLE insurance_provider (
     insurance_id     INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    i_name           TEXT NOT NULL,
+    i_name           TEXT NOT NULL
 );
 
 CREATE TABLE checkup (
@@ -18,13 +16,13 @@ CREATE TABLE checkup (
     title            TEXT NOT NULL,
     age_min          INTEGER     NOT NULL CHECK (age_min >= 0),
     age_max          INTEGER     NOT NULL CHECK (age_max > age_min),
-    required_gender  TEXT NOT NULL,
+    required_gender  TEXT NOT NULL
 );
 
 CREATE TABLE doctor (
     doctor_id        INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     d_name          TEXT NOT NULL,
-    location         TEXT NOT NULL,
+    location         TEXT NOT NULL
 );
 
 CREATE TABLE medical_checkup (
@@ -54,7 +52,7 @@ CREATE TABLE completed_checkup (
     doctor_id       INTEGER     NOT NULL,
     completed_date   DATE        NOT NULL,
     checkup_id      INTEGER     NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user(user_id)
+    FOREIGN KEY (user_id) REFERENCES prevently_user(user_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -63,13 +61,13 @@ CREATE TABLE completed_checkup (
 );
 
 CREATE TABLE appointment (
-    appointment_id   INTEGER     PRIMARY KEY GENERATED ALWAYA AS IDENTITY,
+    appointment_id   INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_id          INTEGER     NOT NULL,
     doctor_id        INTEGER     NOT NULL,
     checkup_id       INTEGER     NOT NULL,
     checkup_date      DATE        NOT NULL,
     duration          INTEGER     NOT NULL CHECK (duration > 0),
-    FOREIGN KEY (user_id) REFERENCES user(user_id)
+    FOREIGN KEY (user_id) REFERENCES prevently_user(user_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,

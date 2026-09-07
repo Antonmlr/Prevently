@@ -1,7 +1,7 @@
-INSERT INTO user (first_name, last_name, date_of_birth, gender) VALUES ('Albert', 'Einstein', '1990-01-01', 'Male');
-INSERT INTO user (first_name, last_name, date_of_birth, gender) VALUES ('Marie', 'Curie', '1992-02-02', 'Female');
-INSERT INTO user (first_name, last_name, date_of_birth, gender) VALUES ('Isaac', 'Newton', '2016-03-03', 'Male');
-INSERT INTO user (first_name, last_name, date_of_birth, gender) VALUES ('Claude', 'Shannon', '1966-04-04', 'Male');
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Albert', 'Einstein', '1990-01-01', 'Male');
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Marie', 'Curie', '1992-02-02', 'Female');
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Isaac', 'Newton', '2016-03-03', 'Male');
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Claude', 'Shannon', '1966-04-04', 'Male');
 
 INSERT INTO insurance_provider (i_name) VALUES ('Knappschaft');
 INSERT INTO insurance_provider (i_name) VALUES ('Techniker Krankenkasse');
@@ -39,7 +39,7 @@ INSERT INTO completed_checkup (user_id, doctor_id, completed_date, checkup_id) V
 INSERT INTO completed_checkup (user_id, doctor_id, completed_date, checkup_id) VALUES (1, 3, '2023-05-01', 5);
 INSERT INTO completed_checkup (user_id, doctor_id, completed_date, checkup_id) VALUES (2, 3, '2023-06-01', 6);
 
-INSERT INTO appointment (user_id, doctor_id, appointment_date, checkup_id) VALUES (1, 1, '2024-01-01', 1);
-INSERT INTO appointment (user_id, doctor_id, appointment_date, checkup_id) VALUES (2, 1, '2024-02-01', 2);
-INSERT INTO appointment (user_id, doctor_id, appointment_date, checkup_id) VALUES (3, 2, '2024-03-01', 3);
-INSERT INTO appointment (user_id, doctor_id, appointment_date, checkup_id) VALUES (4, 2, '2024-04-01', 4);
+INSERT INTO appointment (user_id, doctor_id, checkup_date, checkup_id, duration) VALUES (1, 1, '2024-01-01', 1, 30);
+INSERT INTO appointment (user_id, doctor_id, checkup_date, checkup_id, duration) VALUES (2, 1, '2024-02-01', 2, 30);
+INSERT INTO appointment (user_id, doctor_id, checkup_date, checkup_id, duration) VALUES (3, 2, '2024-03-01', 3, 30);
+INSERT INTO appointment (user_id, doctor_id, checkup_date, checkup_id, duration) VALUES (4, 2, '2024-04-01', 4, 30);

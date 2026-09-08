@@ -1,14 +1,17 @@
+CREATE TABLE insurance_provider (
+    insurance_id     INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    i_name           TEXT NOT NULL
+);
+
 CREATE TABLE prevently_user (
     user_id          INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     first_name       TEXT NOT NULL,
     last_name        TEXT NOT NULL,
     date_of_birth    DATE        NOT NULL,
-    gender           TEXT NOT NULL
-);
-
-CREATE TABLE insurance_provider (
-    insurance_id     INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    i_name           TEXT NOT NULL
+    gender           TEXT NOT NULL,
+    insurance_id     INTEGER     NOT NULL,
+    FOREIGN KEY (insurance_id) REFERENCES insurance_provider(insurance_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE checkup (

@@ -1,12 +1,12 @@
-INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Albert', 'Einstein', '1990-01-01', 'Male');
-INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Marie', 'Curie', '1992-02-02', 'Female');
-INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Isaac', 'Newton', '2016-03-03', 'Male');
-INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender) VALUES ('Claude', 'Shannon', '1966-04-04', 'Male');
-
 INSERT INTO insurance_provider (i_name) VALUES ('Knappschaft');
 INSERT INTO insurance_provider (i_name) VALUES ('Techniker Krankenkasse');
 INSERT INTO insurance_provider (i_name) VALUES ('BARMER');
 INSERT INTO insurance_provider (i_name) VALUES ('AOK');
+
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender, insurance_id) VALUES ('Albert', 'Einstein', '1990-01-01', 'Male', 1);
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender, insurance_id) VALUES ('Marie', 'Curie', '1992-02-02', 'Female', 2);
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender, insurance_id) VALUES ('Isaac', 'Newton', '2016-03-03', 'Male', 3);
+INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender, insurance_id) VALUES ('Claude', 'Shannon', '1966-04-04', 'Male', 4);
 
 INSERT INTO checkup (title, age_min, age_max, required_gender) VALUES ('Hautkrebs Vorsorge', 18, 65, 'Any');
 INSERT INTO checkup (title, age_min, age_max, required_gender) VALUES ('Cholesterin-Screening', 20, 70, 'Any');

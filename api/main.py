@@ -31,15 +31,16 @@ def due_checkups(user_id: int):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
-        SELECT c.checkup_id, c.title, c.age_min, c.age_max, c.required_gender
+        SELECT c.checkup_id, c.title, c.age_min, c.age_max, c.required_gender,
+            (u.date_of_birth + (c.age_min || ' years')::interval)::date AS overdue_since,
+            ic.coverage_amount
         FROM checkup c
         JOIN prevently_user u ON u.user_id = %s
+        LEFT JOIN included_checkup ic ON ic.checkup_id = c.checkup_id AND ic.insurance_id = u.insurance_id
         WHERE EXTRACT(YEAR FROM age(current_date, u.date_of_birth)) BETWEEN c.age_min AND c.age_max
-          AND (c.required_gender = u.gender OR c.required_gender = 'Any')
-          AND NOT EXISTS (
-              SELECT 1 FROM completed_checkup cc
-              WHERE cc.checkup_id = c.checkup_id AND cc.user_id = u.user_id
-          )
+        AND (c.required_gender = u.gender OR c.required_gender = 'Any')
+        AND NOT EXISTS ( SELECT 1 FROM completed_checkup cc
+        WHERE cc.checkup_id = c.checkup_id AND cc.user_id = u.user_id)
         ORDER BY c.title
     """, (user_id,))
     rows = cur.fetchall()
@@ -52,9 +53,10 @@ def completed_checkups(user_id: int):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
-        SELECT c.checkup_id, c.title, c.age_min, c.age_max, c.required_gender
+        SELECT c.checkup_id, c.title, c.age_min, c.age_max, c.required_gender, cc.completed_date, d.d_name AS doctor_name
         FROM completed_checkup cc
         JOIN checkup c ON c.checkup_id = cc.checkup_id
+        JOIN doctor d ON d.doctor_id = cc.doctor_id
         WHERE cc.user_id = %s
         ORDER BY c.title
     """, (user_id,))
@@ -114,7 +116,7 @@ def all_insurance_providers():
     conn.close()
     return rows
 
-@app.get("/users")
+@app.get("/all-users")
 def all_users():
     conn = get_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -150,6 +152,7 @@ class UserCreate(BaseModel):
     last_name: str
     date_of_birth: date
     gender: str
+    insurance_id: int
 
 class CompletedCheckupCreate(BaseModel):
     user_id: int
@@ -171,11 +174,11 @@ def create_user(user: UserCreate):
     try:
         cursor.execute(
             """
-            INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO prevently_user (first_name, last_name, date_of_birth, gender, insurance_id)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING user_id
             """,
-            (user.first_name, user.last_name, user.date_of_birth, user.gender),
+            (user.first_name, user.last_name, user.date_of_birth, user.gender, user.insurance_id),
         )
         new_id = cursor.fetchone()[0]
         conn.commit()

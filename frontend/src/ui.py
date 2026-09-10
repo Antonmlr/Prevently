@@ -46,7 +46,7 @@ class App(tk.Frame):
         due_columns = [
             ("title", "Checkup", 200),
             ("overdue_since", "Überfällig seit", 130),
-            ("coverage_amount", "Coverage", 100),
+            ("coverage_amount", "Coverage in EUR", 100),
         ]
         self._due_tree = ttk.Treeview(
             dashboard_tab, columns=[c[0] for c in due_columns], show="headings", height=8)
@@ -86,7 +86,7 @@ class App(tk.Frame):
         self._mark_date_entry = self._labeled_entry(mark_frame, "Datum (YYYY-MM-DD)", 1)
         self._mark_date_entry.insert(0, date.today().isoformat())
 
-        ttk.Button(mark_frame, text="Markieren", command=self._mark_completed).grid(
+        ttk.Button(mark_frame, text="Erledigt", command=self._mark_completed).grid(
             row=2, column=0, columnspan=2, pady=8)
 
     def _load_dashboard(self):
@@ -195,9 +195,25 @@ class App(tk.Frame):
         book_frame = ttk.LabelFrame(details_tab, text=" Termin buchen (POST /appointments) ")
         book_frame.grid(row=1, column=0, padx=8, pady=8, sticky="ew")
 
-        self._appt_user_entry = self._labeled_entry(book_frame, "User ID", 0)
-        self._appt_doctor_entry = self._labeled_entry(book_frame, "Doctor ID", 1)
-        self._appt_checkup_entry = self._labeled_entry(book_frame, "Checkup ID", 2)
+        ttk.Label(book_frame, text="Nutzer:").grid(
+            row=0, column=0, padx=8, pady=4, sticky=tk.E)
+        self._appt_user_combo = ttk.Combobox(book_frame, state="readonly", width=30)
+        self._appt_user_combo.grid(row=0, column=1, padx=8, pady=4, sticky=tk.W)
+
+        ttk.Label(book_frame, text="Checkup:").grid(
+            row=1, column=0, padx=8, pady=4, sticky=tk.E)
+        self._appt_checkup_combo = ttk.Combobox(book_frame, state="readonly", width=30)
+        self._appt_checkup_combo.grid(row=1, column=1, padx=8, pady=4, sticky=tk.W)
+        self._appt_checkup_combo.bind("<<ComboboxSelected>>", self._on_appt_checkup_selected)
+
+        ttk.Label(book_frame, text="Arzt:").grid(
+            row=2, column=0, padx=8, pady=4, sticky=tk.E)
+        self._appt_doctor_combo = ttk.Combobox(book_frame, state="readonly", width=30)
+        self._appt_doctor_combo.grid(row=2, column=1, padx=8, pady=4, sticky=tk.W)
+
+        self._appt_checkups = []
+        self._appt_doctors = []
+
         self._appt_date_entry = self._labeled_entry(book_frame, "Datum (YYYY-MM-DD)", 3)
         self._appt_duration_entry = self._labeled_entry(book_frame, "Dauer (Minuten)", 4)
 
@@ -210,6 +226,35 @@ class App(tk.Frame):
         self._new_insurance_combo["values"] = names
         if names:
             self._new_insurance_combo.current(0)
+
+        user_names = [f"{u['first_name']} {u['last_name']}" for u in self._users]
+        self._appt_user_combo["values"] = user_names
+        if user_names:
+            self._appt_user_combo.current(0)
+
+        self._appt_checkups = api.get_checkups()
+        checkup_names = [c.get("title", str(c)) for c in self._appt_checkups]
+        self._appt_checkup_combo["values"] = checkup_names
+        if checkup_names:
+            self._appt_checkup_combo.current(0)
+            self._on_appt_checkup_selected()
+
+    def _on_appt_checkup_selected(self, event=None):
+        index = self._appt_checkup_combo.current()
+        if index == -1:
+            return
+        checkup_id = self._appt_checkups[index]["checkup_id"]
+        try:
+            self._appt_doctors = api.get_doctors_for_checkup(checkup_id)
+        except Exception as e:
+            messagebox.showerror("Fehler", str(e))
+            return
+        doctor_names = [d.get("d_name", str(d)) for d in self._appt_doctors]
+        self._appt_doctor_combo["values"] = doctor_names
+        if doctor_names:
+            self._appt_doctor_combo.current(0)
+        else:
+            self._appt_doctor_combo.set("")
 
     def _create_user(self):
         try:
@@ -229,10 +274,16 @@ class App(tk.Frame):
             messagebox.showerror("Fehler", str(e))
 
     def _book_appointment(self):
+        user_index = self._appt_user_combo.current()
+        checkup_index = self._appt_checkup_combo.current()
+        doctor_index = self._appt_doctor_combo.current()
+        if user_index == -1 or checkup_index == -1 or doctor_index == -1:
+            messagebox.showwarning("Auswahl fehlt", "Bitte Nutzer, Checkup und Arzt auswählen.")
+            return
         try:
-            user_id = int(self._appt_user_entry.get())
-            doctor_id = int(self._appt_doctor_entry.get())
-            checkup_id = int(self._appt_checkup_entry.get())
+            user_id = self._users[user_index]["user_id"]
+            checkup_id = self._appt_checkups[checkup_index]["checkup_id"]
+            doctor_id = self._appt_doctors[doctor_index]["doctor_id"]
             checkup_date = date.fromisoformat(self._appt_date_entry.get())
             duration = int(self._appt_duration_entry.get())
             api.post_appointment(user_id, doctor_id, checkup_id, checkup_date, duration)
@@ -293,7 +344,7 @@ class App(tk.Frame):
         checkup_columns = [
             ("checkup_id", "ID", 50),
             ("title", "Titel", 200),
-            ("coverage_amount", "Coverage [€]", 100),
+            ("coverage_amount", "Coverage in EUR", 100),
         ]
         self._insurance_tree = ttk.Treeview(
             feature_tab, columns=[c[0] for c in checkup_columns], show="headings", height=6)

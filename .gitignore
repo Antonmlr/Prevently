@@ -11,3 +11,6 @@ out/
 *.env
 __pycache__/
 .venv/
+build/
+dist/
+*.spec

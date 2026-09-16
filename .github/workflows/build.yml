@@ -1,5 +1,5 @@
 # ============================================================
-#  Build & publish the LaTeX documents of DBMS_10.
+#  Build & publish the LaTeX documents of Prevently.
 #
 #  This is the reference workflow for your term-project
 #  documentation. Copy it (together with the Makefile) into
@@ -34,14 +34,19 @@ jobs:
             texlive-lang-german \
             texlive-fonts-recommended
 
-      - name: Build all PDFs
+      - name: Install PlantUML
+        run: sudo apt-get install -y plantuml
+
+      - name: Build all PDFs and ER diagram
         run: make all
 
-      - name: Upload PDFs as build artifact
+      - name: Upload PDFs and PNG as build artifact
         uses: actions/upload-artifact@v4
         with:
           name: pdfs
-          path: out/*.pdf
+          path: |
+            out/*.pdf
+            out/*.png
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -50,5 +55,5 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" \
             --title "DBMS_10 ${{ github.ref_name }}" \
-            --notes "Automatically built documents for tag \`${{ github.ref_name }}\`: exercise, proposal template and example documentation." \
-            out/*.pdf
+            --notes "Automatically built documents for tag \`${{ github.ref_name }}\`: exercise, proposal and documentation." \
+            out/*.pdf out/*.png

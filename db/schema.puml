@@ -1,0 +1,96 @@
+@startuml 
+' ============================================================
+'  schema.puml -- ER Diagram: Prevently · THGA Bochum
+' ============================================================
+
+skinparam linetype ortho
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam entityBackgroundColor #CCE5FF
+skinparam entityBorderColor     #003C7C
+skinparam entityFontColor       #003C7C
+skinparam entityFontStyle       bold
+
+' ------------------------------------------------------------
+' Entities
+' ------------------------------------------------------------
+
+entity "prevently_user" as prevently_user {
+  *user_id : INTEGER <<PK>>
+  --
+  first_name : TEXT
+  last_name : TEXT
+  date_of_birth : DATE
+  gender : TEXT
+  insurance_id : INTEGER <<FK>>
+}
+
+entity "insurance_provider" as insurance_provider {
+  *insurance_id : INTEGER <<PK>>
+  --
+  i_name : TEXT
+}
+
+entity "checkup" as checkup {
+  *checkup_id : INTEGER <<PK>>
+  --
+  title : TEXT
+  age_min : INTEGER
+  age_max : INTEGER
+  required_gender : TEXT
+}
+
+entity "doctor" as doctor {
+  *doctor_id : INTEGER <<PK>>
+  --
+  d_name : TEXT
+  location : TEXT
+}
+
+entity "medical_checkup" as medical_checkup {
+  *medical_id : INTEGER <<PK>>
+  --
+  doctor_id : INTEGER <<FK>>
+  checkup_id : INTEGER <<FK>>
+}
+
+entity "included_checkup" as included_checkup {
+  *coverage_id : INTEGER <<PK>>
+  --
+  insurance_id : INTEGER <<FK>>
+  checkup_id : INTEGER <<FK>>
+  coverage_amount : INTEGER
+}
+
+entity "completed_checkup" as completed_checkup {
+  *completed_id : INTEGER <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  doctor_id : INTEGER <<FK>>
+  checkup_id : INTEGER <<FK>>
+  completed_date : DATE
+}
+
+entity "appointment" as appointment {
+  *appointment_id : INTEGER <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  doctor_id : INTEGER <<FK>>
+  checkup_id : INTEGER <<FK>>
+  checkup_date : DATE
+  duration : INTEGER
+}
+
+insurance_provider ||--o{ prevently_user : "insures"
+insurance_provider ||--o{ included_checkup : "covers"
+checkup ||--o{ included_checkup : "is covered by"
+doctor ||--o{ medical_checkup : "performs"
+checkup ||--o{ medical_checkup : "is performed as"
+prevently_user ||--o{ completed_checkup : "completes"
+doctor ||--o{ completed_checkup : "carries out"
+checkup ||--o{ completed_checkup : "is recorded in"
+prevently_user ||--o{ appointment : "books"
+doctor ||--o{ appointment : "is booked for"
+checkup ||--o{ appointment : "is subject of"
+
+@enduml

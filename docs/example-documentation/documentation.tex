@@ -9,20 +9,21 @@
 \documentclass[11pt,a4paper]{article}
 
 \usepackage{thga-db}
+\usepackage{seqsplit}  % allows line-breaking inside long unbroken \texttt strings (e.g. API paths)
 
 \renewcommand{\thgaKurs}{Databases}
 \renewcommand{\thgaDatum}{Summer Term 2026}
 
 \begin{document}
 \thispagestyle{empty}
-\thgaTitel{Term Project – Documentation (Example)}%
-{Club Library: a database-backed lending system}
+\thgaTitel{Prevently – Documentation }%
+{A Database system to manage medical checkups}
 
 \begin{infobox}
-\textbf{Author:} Jane Doe (example) \\
+\textbf{Author:} Anton Möller \\
 \textbf{Module:} Introduction to Database Management Systems · THGA Bochum \\
 \textbf{Stack:} PostgreSQL · FastAPI · Docker Compose · tkinter (\texttt{.deb}) \\
-\textbf{Repository:} \url{https://github.com/<user>/club-library}
+\textbf{Repository:} \url{https://github.com/Antonmlr/Prevently}
 \end{infobox}
 
 \tableofcontents
@@ -32,39 +33,59 @@
 \section{Introduction and motivation}
 % ============================================================
 
-Small clubs often manage their library with a spreadsheet: one row per book, a
-column scribbled with the current borrower. This breaks down as soon as two
-people edit the file, and it cannot answer questions such as \emph{``which books
-are currently on loan?''} without manual counting.
+Many people, me included, do not go to medical health checkups as often as they should. This causes a higher risk of developing health problems, which could have been prevented
+and safe the insurance companies a lot of money. I've heard in a morning podcast that only every 3rd person goes to a checkup. For me the reason behind this is clear.
+It is simply too much effort to track the nessesary medical checkups and align them with the own schedule. This is where this first prototyp of prevently comes into play.
+Prevently should help some day to manage the personal medical checkups and reminds the user when a checkup is due. The positive impact of
+this is that the user can detect health problems earliert and can prevent from getting worse and the insurance companies could safe a 7 digit amount of money.
 
-\textbf{Club Library} replaces that spreadsheet with a proper relational system.
-It manages \textbf{books}, \textbf{members} and \textbf{loans}, exposes the data
-through a REST API and offers a small desktop frontend for the librarian.
+This first prototype of \textbf{Prevently} Tracks the medical checkups of users and shows them in a UI which medical checkup for which user is due.
+You can also mark the medical checkup as done for a user or create a appointment.
+It manages \textbf{checkups}, \textbf{doctors} and \textbf{appointments}, exposes the data
+through a REST API and offers a small desktop frontend for some choosen functionality.
 
 \begin{beispielbox}
-\textbf{Usage scenario.} A member returns two books. The librarian opens the
-frontend, searches for the member, sees their two open loans and marks both as
-returned. The stock counters update immediately, and the ``available books''
-view now lists both titles again.
+\textbf{Usage scenario.} A user chooses his name and then gets a list of all medical checkups which are due for him. Then he can create an appointment with a doctor.
+When the appointment is done, he can mark the checkup as done by click on the checkup and then click on the button "Erledigt". 
+The system will then record the checkup as completed for this user. With that a user can easily track his medical checkups.
 \end{beispielbox}
 
 % ============================================================
 \section{Data model}
 % ============================================================
 
-The domain has three entity types. A \textbf{member} can borrow many
-\textbf{books} over time, and a book can be borrowed by many members -- an
-\texttt{N:M} relationship that is resolved by the \textbf{loan} entity (L 02,
-L 03).
+The domain has six entity types. A \textbf{user} is insured with exactly one
+\textbf{insurance provider}, and every \textbf{checkup} may be covered by
+several insurance providers. An \texttt{N:M} relationship
+resolved by the \textbf{included\_checkup} entity. Likewise, a \textbf{doctor} can perform many
+different checkup types and a checkup type can be performed by several
+doctors -- another \texttt{N:M} relationship, which is resolved by the
+\textbf{medical\_checkup} entity. Finally, when a user actually has a checkup
+carried out by a doctor, this can be recorded as a \textbf{completed
+checkup} (already happened) connect to exactly one user, one doctor and one checkup type and
+carry their own attributes (date, duration).
 
 \begin{beispielbox}
 \textbf{ER model (textual).}
 \begin{itemize}[leftmargin=1.4em, topsep=2pt]
-  \item \textbf{member} (1) \;--\; borrows \;--\; (N) \textbf{loan}
-  \item \textbf{book} (1) \;--\; is borrowed in \;--\; (N) \textbf{loan}
+  \item \textbf{user} (N) \;--\; is insured with \;--\; (1) \textbf{insurance provider}
+  \item \textbf{insurance provider} (1) \;--\; includes \;--\; (N) \textbf{included\_checkup}
+  \item \textbf{checkup} (1) \;--\; is covered by \;--\; (N) \textbf{included\_checkup}
+  \item \textbf{doctor} (1) \;--\; performs \;--\; (N) \textbf{medical\_checkup}
+  \item \textbf{checkup} (1) \;--\; is performed as \;--\; (N) \textbf{medical\_checkup}
+  \item \textbf{user} (1) \;--\; completes \;--\; (N) \textbf{completed\_checkup}
+  \item \textbf{doctor} (1) \;--\; carries out \;--\; (N) \textbf{completed\_checkup}
+  \item \textbf{checkup} (1) \;--\; is recorded in \;--\; (N) \textbf{completed\_checkup}
+  \item \textbf{user} (1) \;--\; books \;--\; (N) \textbf{appointment}
+  \item \textbf{doctor} (1) \;--\; is booked for \;--\; (N) \textbf{appointment}
+  \item \textbf{checkup} (1) \;--\; is subject of \;--\; (N) \textbf{appointment}
 \end{itemize}
-Thus \textbf{member} \texttt{N:M} \textbf{book}, resolved through
-\textbf{loan}.
+Thus \textbf{insurance provider} \texttt{N:M} \textbf{checkup}, resolved
+through \textbf{included\_checkup}, and \textbf{doctor} \texttt{N:M}
+\textbf{checkup}, resolved through \textbf{medical\_checkup}.
+\textbf{completed\_checkup} and \textbf{appointment} are both \texttt{1:N}
+relationships between \textbf{user}, \textbf{doctor} and \textbf{checkup},
+modelled as their own entities because they carry additional attributes.
 \end{beispielbox}
 
 \subsection{Relational schema}
@@ -73,47 +94,113 @@ Derived from the ER model, with primary keys underlined and foreign keys in
 italics:
 
 \begin{itemize}[leftmargin=1.4em]
-  \item \texttt{member}(\underline{id}, name, email)
-  \item \texttt{book}(\underline{id}, title, author, isbn, stock)
-  \item \texttt{loan}(\underline{id}, \emph{member\_id}, \emph{book\_id},
-        borrowed\_on, due\_on, returned\_on)
+  \item \texttt{Prevently\_user}(\underline{User\_id}, \emph{Insurance\_id}, First\_name, Last\_name, Date\_of\_birth, Gender)
+  \item \texttt{Insurance\_provider}(\underline{Insurance\_id}, I\_name)
+  \item \texttt{Checkup}(\underline{Checkup\_id}, Title, Age\_min, Age\_max, Required\_gender)
+  \item \texttt{Doctor}(\underline{Doctor\_id}, D\_name, Location)
+  \item \texttt{Medical\_checkup}(\underline{Medical\_id}, \emph{Doctor\_id}, \emph{Checkup\_id})
+  \item \texttt{Included\_checkup}(\underline{Coverage\_id}, \emph{Insurance\_id}, \emph{Checkup\_id}, Coverage\_amount)
+  \item \texttt{Completed\_checkup}(\underline{Completed\_id}, \emph{User\_id}, \emph{Doctor\_id}, \emph{Checkup\_id}, Completed\_date)
+  \item \texttt{Appointment}(\underline{Appointment\_id}, \emph{User\_id}, \emph{Doctor\_id}, \emph{Checkup\_id}, Checkup\_date, Duration)
 \end{itemize}
 
 \textbf{Normalisation.} Every non-key attribute depends only on the whole
-primary key of its table, and there are no transitive dependencies: a member's
-email lives only in \texttt{member}, a book's author only in \texttt{book}, and
-a loan references members and books by their keys rather than duplicating their
-data. The schema is therefore in \textbf{3NF} (L 04).
+primary key of its own table, and there are no transitive dependencies: a
+checkup's age and gender rules live only in \texttt{checkup}, a doctor's
+location only in \texttt{doctor}, and the two \texttt{N:M} relationships
+(insurance coverage, doctor capability) are resolved through their own
+junction entities (\texttt{included\_checkup}, \texttt{medical\_checkup})
+rather than duplicating data across tables. Likewise,
+\texttt{completed\_checkup} and \texttt{appointment} reference \texttt{user},
+\texttt{doctor} and \texttt{checkup} only by their keys and store the
+attributes specific to that event, so the schema is in \textbf{3NF} (L 04).
 
 % ============================================================
 \section{Database (PostgreSQL)}
 % ============================================================
 
-The schema and seed data are created by an init script that PostgreSQL runs on
+The schema and seed data are created by an init and sample data script that PostgreSQL runs on
 first start (L 07, L 09).
 
-\begin{lstlisting}[language=SQL, caption={init.sql (excerpt) -- schema and seed data}]
-CREATE TABLE member (
-    id    INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name  VARCHAR(120) NOT NULL,
-    email VARCHAR(200) UNIQUE
+\begin{lstlisting}[language=SQL, caption={01\_schema.sql Database schema (PostgreSQL)}]
+CREATE TABLE insurance_provider (
+    insurance_id     INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    i_name           TEXT NOT NULL
 );
 
-CREATE TABLE book (
-    id     INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    title  VARCHAR(200) NOT NULL,
-    author VARCHAR(120) NOT NULL,
-    isbn   CHAR(13) UNIQUE,
-    stock  INTEGER NOT NULL DEFAULT 1 CHECK (stock >= 0)
+CREATE TABLE prevently_user (
+    user_id          INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    first_name       TEXT NOT NULL,
+    last_name        TEXT NOT NULL,
+    date_of_birth    DATE        NOT NULL,
+    gender           TEXT NOT NULL,
+    insurance_id     INTEGER     NOT NULL,
+    FOREIGN KEY (insurance_id) REFERENCES insurance_provider(insurance_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE TABLE loan (
-    id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    member_id    INTEGER NOT NULL REFERENCES member(id),
-    book_id      INTEGER NOT NULL REFERENCES book(id),
-    borrowed_on  DATE NOT NULL DEFAULT CURRENT_DATE,
-    due_on       DATE NOT NULL,
-    returned_on  DATE
+CREATE TABLE checkup (
+    checkup_id       INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    title            TEXT NOT NULL,
+    age_min          INTEGER     NOT NULL CHECK (age_min >= 0),
+    age_max          INTEGER     NOT NULL CHECK (age_max > age_min),
+    required_gender  TEXT NOT NULL
+);
+
+CREATE TABLE doctor (
+    doctor_id        INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    d_name          TEXT NOT NULL,
+    location         TEXT NOT NULL
+);
+
+CREATE TABLE medical_checkup (
+    medical_id       INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    doctor_id        INTEGER     NOT NULL,
+    checkup_id       INTEGER     NOT NULL,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (checkup_id) REFERENCES checkup(checkup_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE included_checkup (
+    coverage_id      INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    insurance_id     INTEGER     NOT NULL,
+    checkup_id       INTEGER     NOT NULL,
+    coverage_amount   INTEGER     NOT NULL CHECK (coverage_amount >= 0),
+    FOREIGN KEY (insurance_id) REFERENCES insurance_provider(insurance_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (checkup_id) REFERENCES checkup(checkup_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE completed_checkup (
+    completed_id    INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id         INTEGER     NOT NULL,
+    doctor_id       INTEGER     NOT NULL,
+    completed_date   DATE        NOT NULL,
+    checkup_id      INTEGER     NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES prevently_user(user_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (checkup_id) REFERENCES checkup(checkup_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE appointment (
+    appointment_id   INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id          INTEGER     NOT NULL,
+    doctor_id        INTEGER     NOT NULL,
+    checkup_id       INTEGER     NOT NULL,
+    checkup_date      DATE        NOT NULL,
+    duration          INTEGER     NOT NULL CHECK (duration > 0),
+    FOREIGN KEY (user_id) REFERENCES prevently_user(user_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctor(doctor_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (checkup_id) REFERENCES checkup(checkup_id) 
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 \end{lstlisting}
 
@@ -129,25 +216,39 @@ are public; write endpoints require the header \texttt{X-API-Key} (cf.\ DBMS\_09
 \toprule
 \textbf{Method} & \textbf{Path} & \textbf{Purpose} & \textbf{Key} \\
 \midrule
-\texttt{GET}  & \texttt{/books} & books + count of open loans (JOIN + agg.) & -- \\
-\texttt{GET}  & \texttt{/members/\{id\}/loans} & open loans of a member (JOIN) & -- \\
-\texttt{POST} & \texttt{/loans} & lend a book & yes \\
-\texttt{POST} & \texttt{/returns} & return a book & yes \\
+\texttt{GET}  & \texttt{\seqsplit{/users/\{user\_id\}/due-checkups}} & All infos for a user's due checkups (JOIN, LEFT JOIN and Subquery) & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/users/\{user\_id\}/completed-checkups}} & List of completed checkups for a user (JOIN with 3 tables) & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/insurance-providers/\{id\}/checkups}} & Contains a list of checkups covered by an insurance provider & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/checkups/\{checkup\_id\}/doctors}} & Search a doctor for a checkup (optional with location) & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/insurance-providers}} & Return a list of all insurance providers & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/all-users}} & Return a list of all users & -- \\
+\texttt{GET}  & \texttt{\seqsplit{/checkups}} & Return a list of all checkups & -- \\
+\texttt{POST} & \texttt{\seqsplit{/users}} & create a new user & yes \\
+\texttt{POST} & \texttt{\seqsplit{/completed-checkups}} & record a completed checkup & yes \\
+\texttt{POST} & \texttt{\seqsplit{/appointments}} & schedule an appointment & yes \\
 \bottomrule
 \end{tabularx}
 
 \medskip
-The \texttt{/books} endpoint demonstrates a \textbf{JOIN} combined with an
-\textbf{aggregation} (L 06): it counts how many copies of each book are
-currently on loan.
+The \texttt{\seqsplit{/users/\{user\_id\}/due-checkups}} endpoint demonstrates the most compley query in the system. It first joins the 
+\texttt{checkup} table with \texttt{prevently\_user} to filter all checkups that are due for a user. Then we proceed with a LEFT
+JOIN with the \texttt{included\_checkup} table to get the coverage amount. I've choosen a LEFT JOIN here because most likely not all
+checkups are covered by a insurance provider. With the following WHERE clause we filter all checkups, that are not due, already done or required
+for the selected user. The most complex part is the calculation of the \texttt{overdue\_since} column. We take the date of birth 
+of the user and add the minimum age of the checkup to it, which we also convert with postgreSQL's interval and date function.
 
-\begin{lstlisting}[language=SQL, caption={Query behind GET /books (JOIN + aggregation)}]
-SELECT b.id, b.title, b.author, b.stock,
-       COUNT(l.id) FILTER (WHERE l.returned_on IS NULL) AS on_loan
-FROM book b
-LEFT JOIN loan l ON l.book_id = b.id
-GROUP BY b.id
-ORDER BY b.title;
+\begin{lstlisting}[language=SQL, caption={Query behind GET /users/\{user\_id\}/due-checkups}]
+SELECT c.checkup_id, c.title, c.age_min, c.age_max, c.required_gender,
+            (u.date_of_birth + (c.age_min || ' years')::interval)::date AS overdue_since,
+            ic.coverage_amount
+        FROM checkup c
+        JOIN prevently_user u ON u.user_id = %s
+        LEFT JOIN included_checkup ic ON ic.checkup_id = c.checkup_id AND ic.insurance_id = u.insurance_id
+        WHERE EXTRACT(YEAR FROM age(current_date, u.date_of_birth)) BETWEEN c.age_min AND c.age_max
+        AND (c.required_gender = u.gender OR c.required_gender = 'Any')
+        AND NOT EXISTS ( SELECT 1 FROM completed_checkup cc
+        WHERE cc.checkup_id = c.checkup_id AND cc.user_id = u.user_id)
+        ORDER BY c.title
 \end{lstlisting}
 
 The write path is guarded by a dependency that checks the API key -- adapted
@@ -157,33 +258,37 @@ from the DBMS\_09 exercise:
 from fastapi import Header, HTTPException
 import os
 
-def require_api_key(x_api_key: str = Header(...)):
-    if x_api_key != os.environ["API_KEY"]:
-        raise HTTPException(status_code=401, detail="invalid API key")
+EXPECTED_TOKEN = os.environ["API_KEY"]
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != EXPECTED_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
 \end{lstlisting}
 
 % ============================================================
 \section{Frontend (tkinter, packaged as .deb)}
 % ============================================================
 
-The frontend is a small tkinter application with two tabs: \textbf{Books} (a
-searchable table backed by \texttt{GET /books}) and \textbf{Loans} (a form that
-calls \texttt{POST /loans} and \texttt{POST /returns}). It never touches the
+The frontend is a small tkinter application with three tabs: \textbf{Main} (a dashboard which shows
+due checkups for a selected user and also completed checkups with the option to mark checkups as completed), \textbf{Detail} (a view that allows to add a new user or add an 
+appointment for a selected user) and a third tab, \textbf{Feature} that let you find a doctor for a selected checkup. It never touches the
 database directly -- it only calls the API (L 10).
 
 At startup a \textbf{connection dialog} asks for the API URL and the
 \texttt{X-API-Key}; the key is kept in memory for the session only and is never
 written to disk.
 
-\textbf{Packaging.} The application is frozen with PyInstaller and wrapped into a
-Debian package with \texttt{fpm} (L 13), so the lecturer can install and run it
-on the lecture server:
-
-\begin{lstlisting}[caption={Building and installing the .deb}]
-uv run pyinstaller --name club-library --onedir src/club_library/__main__.py
-mkdir -p pkg/usr/bin && cp -r dist/club-library pkg/usr/bin/
-fpm -s dir -t deb --name club-library --version 0.1.0 -C pkg .
-sudo dpkg -i club-library_0.1.0_amd64.deb
+\textbf{Packaging.} The application is frozen with PyInstaller into a standalone
+executable and wrapped into a Debian package with \texttt{fpm}. Since \texttt{fpm}
+always packages for whatever architecture it is run on, the lecturer builds the
+\texttt{.deb} himself, directly on his own machine, instead of installing a
+package built on a different architecture:
+\begin{lstlisting}[caption={Building the .deb (run inside frontend/)}]
+cd frontend
+uv sync --group dev
+uv run pyinstaller --name prevently --onedir -p . src/__main__.py
+fpm -s dir -t deb --name prevently --version 0.1.0 \
+    --description "Prevently frontend" -C dist .
 \end{lstlisting}
 
 % ============================================================
@@ -192,7 +297,8 @@ sudo dpkg -i club-library_0.1.0_amd64.deb
 
 The backend runs as two containers, orchestrated by Docker Compose and deployed
 on the lecture server (L 09). Credentials live in a \texttt{.env} file that is
-not committed.
+not committed, I instead provide a \texttt{.env.example} as a template. This could be filled with the credentials and
+renamed to \texttt{.env} before first start the application.
 
 \begin{lstlisting}[caption={docker-compose.yml (excerpt, after L 09)}]
 services:
@@ -202,39 +308,55 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "1904:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db:/docker-entrypoint-initdb.d/
+    networks:
+      - backend
+
   api:
     build: ./api
     environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       API_KEY: ${API_KEY}
-    env_file: .env
-    ports: ["8000:8000"]
-    depends_on: [postgres]
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
 volumes:
   pg_data:
+
+networks:
+  backend:
 \end{lstlisting}
 
-\textbf{Deployment steps on the lecture server.}
+\textbf{Deployment steps on the lecture server after cloning the repository.}
 \begin{enumerate}[leftmargin=1.6em, topsep=2pt]
-  \item \texttt{docker compose up -d} -- start database and API.
-  \item \texttt{sudo dpkg -i club-library\_0.1.0\_amd64.deb} -- install the
-        frontend.
-  \item Launch \texttt{club-library}, enter the API URL and the
+  \item \texttt{cp .env.example .env} -- create a copy of the template env and fill in your credentials.
+  \item \texttt{docker compose up -d --build} -- start database and Build Dockerimage of API.
+  \item \texttt{docker compose ps} -- check that both containers are running.
+  \item \texttt{sudo dpkg -i prevently\_0.1.0\_<arch\_of\_your\_system>.deb} -- install the \texttt{.deb} built above (see \textbf{Packaging}) for your architecture.
+  \item Launch \texttt{Prevently}, enter the API URL and the
         \texttt{X-API-Key} in the connection dialog.
 \end{enumerate}
 
 % ============================================================
 \section{Reflection}
 % ============================================================
-
-The separation into database, API and frontend paid off: the API-key guard and
-the aggregation query could be tested with \texttt{curl} long before the
-frontend existed. The trickiest part was \textbf{return handling} when several
-copies of the same book are on loan at once -- solved by matching a return to
-the oldest open loan of that book. Given more time, transaction isolation
-(L 11) would make concurrent returns fully safe.
+The separation into two containers (database and API) was a good choice and showed different advantages.
+The database could be tested separately without affecting the live system. This approach also allowed to 
+test the API endpoints with \texttt{curl} long before the frontend existed. 
+The frontend was also tested separately and could be developed without affecting the backend. With the two containers,
+the system is also more robust and the database could be easily updated without affecting the API. I need to make some more 
+endpoints for the API because I want to have the names of the doctors and checkups in the frontend instead of the IDs.
+But overall the system is working like expected. For the future I want to add a feature that allows 
+a user seperation (maybe with firebase authentication) and the switch to https. Also the appointments should be connected to a 
+user calendar to insert the appointments automatically and recieve notifications.
 
 % ============================================================
 \section*{Sources and reuse}
@@ -248,7 +370,8 @@ Reused with attribution, as permitted:
   \item tkinter connection dialog and \texttt{Treeview} layout -- adapted from
         \textbf{DBMS\_09 (frontend)} and \textbf{lecture 10}.
   \item PyInstaller / \texttt{fpm} packaging commands -- after \textbf{lecture
-        13}.
+        09}.
+  \item PostgreSQL documentation \url{https://www.postgresql.org/docs/current/functions-datetime.html}
 \end{itemize}
 
 \end{document}

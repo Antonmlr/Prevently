@@ -182,6 +182,9 @@ def create_user(user: UserCreate):
         )
         new_id = cursor.fetchone()[0]
         conn.commit()
+    except psycopg2.errors.ForeignKeyViolation:
+        conn.rollback()
+        raise HTTPException(status_code=404, detail="insurance_id existiert nicht.")
     finally:
         cursor.close()
         conn.close()

@@ -5,8 +5,7 @@ import psycopg2
 import psycopg2.extras
 import pytest
 
-# Points at the postgres service from docker-compose.test.yml.
-# Override with an env var if you run the DB somewhere else.
+# Points at the postgres service from docker-compose.test.yml. (Now hardcoded)
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
     "postgresql://vorlesung:geheim@localhost:1905/vorlesung",
@@ -21,7 +20,7 @@ import main  # noqa: E402  (import after env vars are set on purpose)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-# Every table in db/01_schema.sql. Order doesn't matter here because
+# Every table in db/01_schema.sql. 
 ALL_TABLES = [
     "appointment",
     "completed_checkup",
